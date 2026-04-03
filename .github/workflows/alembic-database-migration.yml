@@ -1,0 +1,71 @@
+name: DB Migration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      db_changed: ${{ steps.filter.outputs.db }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for DB migration changes
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            db:
+              - 'migrations/**'
+              - 'alembic.ini'
+
+
+  alembic:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.db_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Doppler CLI
+        uses: dopplerhq/cli-action@v1
+
+      - name: Run Docker Compose
+        run: doppler run -p 20206205tech -c prd -- docker compose -f docker-compose.prod.yml up -d
+        env:
+          DOPPLER_TOKEN: ${{ secrets.DOPPLER_TOKEN }}
+
+      - name: Check running containers
+        run: |
+          docker ps -a
+
+      - name: Check logs
+        run: |
+          docker logs be-ai
+
+      - name: Preview Changes
+        # run: docker exec be-ai sh -c "alembic upgrade head --sql"
+        run: |
+          echo "=== Kiểm tra phiên bản Alembic hiện tại ==="
+          docker exec be-ai sh -c "alembic current"
+
+          echo "=== Hiển thị toàn bộ lịch sử Alembic ==="
+          docker exec be-ai sh -c "alembic history"
+
+          echo "=== Kiểm tra các migration chưa chạy (từ current đến head) ==="
+          docker exec be-ai sh -c "alembic history -r current:head"
+
+      - name: Apply Changes
+        if: github.ref == 'refs/heads/main'
+        run: docker exec be-ai sh -c "alembic upgrade head"
