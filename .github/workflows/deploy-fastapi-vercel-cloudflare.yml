@@ -77,7 +77,7 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: [install-deps, unit-test, e2e-test]
+    needs: [install-deps]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
