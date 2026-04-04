@@ -5,7 +5,7 @@ env = Env()
 logger.info(f"Loading environment variables...")
 
 
-DATA_PIPELINE_VBPL_DATABASE_URL = env.str("DATA_PIPELINE_VBPL_DATABASE_URL")
+DATABASE_URL = env.str("DATA_PIPELINE_VBPL_DATABASE_URL")
 
 
 SUPABASE_PROJECT_ID = env.str("SUPABASE_PROJECT_ID")

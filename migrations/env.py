@@ -9,7 +9,7 @@ from database.models import Base
 config = context.config
 
 
-config.set_main_option("sqlalchemy.url", env.DATA_PIPELINE_VBPL_DATABASE_URL)
+config.set_main_option("sqlalchemy.url", env.DATABASE_URL)
 
 
 # Interpret the config file for Python logging.

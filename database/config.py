@@ -4,8 +4,7 @@ from sqlalchemy.orm import sessionmaker
 import env
 from utils.log_function import log_function
 
-DATABASE_URL = env.DATA_PIPELINE_VBPL_DATABASE_URL
-engine = create_engine(DATABASE_URL)
+engine = create_engine(env.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
