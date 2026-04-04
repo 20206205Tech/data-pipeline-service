@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -35,3 +37,16 @@ def get_recent_documents(limit: int = 10, db: Session = Depends(get_db)):
 def get_issue_date_report(db: Session = Depends(get_db)):
     """Thống kê theo năm"""
     return service.get_issue_date_report(db)
+
+
+@router.get("/info", dependencies=[Depends(require_admin)])
+@log_function
+def get_document_info(
+    item_id: Optional[int] = None,
+    document_number: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    """Lấy thông tin chi tiết của văn bản theo item_id hoặc document_number"""
+    return service.get_document_info_detail(
+        db, item_id=item_id, document_number=document_number
+    )

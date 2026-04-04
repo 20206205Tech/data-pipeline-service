@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import HTTPException
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -90,3 +92,62 @@ def get_issue_date_report(db: Session):
         return [{"year": row[0], "count": row[1]} for row in result]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Lỗi issue_date_report: {str(e)}")
+
+
+def get_document_info_detail(
+    db: Session, item_id: Optional[int] = None, document_number: Optional[str] = None
+):
+    """Lấy thông tin chi tiết của văn bản theo item_id hoặc document_number"""
+    if not item_id and not document_number:
+        raise HTTPException(
+            status_code=400, detail="Vui lòng cung cấp item_id hoặc document_number"
+        )
+
+    conditions = []
+    params = {}
+
+    if item_id:
+        conditions.append("item_id = :item_id")
+        params["item_id"] = item_id
+    if document_number:
+        conditions.append("document_number = :document_number")
+        params["document_number"] = document_number
+
+    where_clause = " OR ".join(conditions)
+
+    query = text(
+        f"""
+        SELECT
+            item_id, status, effective_date, issuing_agency,
+            document_number, issue_date, title, signer, position, update_at
+        FROM document_info
+        WHERE {where_clause}
+        LIMIT 1
+    """
+    )
+
+    try:
+        row = db.execute(query, params).fetchone()
+        if not row:
+            raise HTTPException(
+                status_code=404, detail="Không tìm thấy thông tin văn bản"
+            )
+
+        return {
+            "item_id": row[0],
+            "status": row[1],
+            "effective_date": row[2],
+            "issuing_agency": row[3],
+            "document_number": row[4],
+            "issue_date": row[5],
+            "title": row[6],
+            "signer": row[7],
+            "position": row[8],
+            "update_at": row[9],
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Lỗi khi lấy thông tin văn bản: {str(e)}"
+        )
